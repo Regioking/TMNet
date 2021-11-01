@@ -32,7 +32,7 @@ def test(test_args):
     data_mode = test_args['data_mode']
     dataset_folder = test_args['dataset_folder']
     result_folder = test_args['result_folder']
-    os.environ['CUDA_VISIBLE_DEVICES'] = test_args['cuda']
+    #os.environ['CUDA_VISIBLE_DEVICES'] = test_args['cuda']
 
     scale = 4
     N_ot = 7 #3
