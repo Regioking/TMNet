@@ -1,6 +1,5 @@
 .history
 .vscode
-checkpoints/*
 evaluations/*
 experiments/*
 __pycache__

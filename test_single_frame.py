@@ -9,8 +9,11 @@ test_args['model_path'] = './checkpoints/tmnet_single_frame.pth'
 test_args['result_folder'] = './evaluations'
 
 # DATASET =============================================================
-test_args['data_mode'] = 'vid4'
-test_args['dataset_folder'] =  './datasets/vid4/LR/*'
+test_args['Custom'] = 'ucf101'
+test_args['dataset_folder'] =  './test_example/LR/*'
+
+# test_args['data_mode'] = 'vid4'
+# test_args['dataset_folder'] =  './datasets/vid4/LR/*'
 
 # test_args['data_mode'] = 'vimeo_fast'
 # test_args['dataset_folder'] =  './datasets/vimeo-90k_septuplet/fast_of_test/LR/*'
