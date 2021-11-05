@@ -11,9 +11,11 @@ custom_option['model_path'] = './checkpoints/tmnet_multiple_frames.pth'
 custom_option['result_folder'] = './evaluations'
 
 # DATASET =============================================================
-custom_option['data_mode'] = 'adobe'
-custom_option['dataset_folder'] = './datasets/adobe240fps/test/LR/*'
+# custom_option['data_mode'] = 'adobe'
+# custom_option['dataset_folder'] = './datasets/adobe240fps/test/LR/*'
 
+custom_option['data_mode'] = 'Custom'
+custom_option['dataset_folder'] = './test_example/multiple/*'
 
 # custom_option['data_mode'] = 'vid4'
 # custom_option['dataset_folder'] = './datasets/vid4/LR/*'

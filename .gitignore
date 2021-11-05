@@ -12,3 +12,4 @@ tmnetInJittor_d4/*
 data/adobe240fps_folder_train.txt
 data/adobe240fps_folder_valid.txt
 data/adobe240fps_folder_test.txt
+test_example/*

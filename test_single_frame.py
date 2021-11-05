@@ -10,7 +10,7 @@ test_args['result_folder'] = './evaluations'
 
 # DATASET =============================================================
 test_args['Custom'] = 'ucf101'
-test_args['dataset_folder'] =  './test_example/LR/*'
+test_args['dataset_folder'] =  './test_example/single/*'
 
 # test_args['data_mode'] = 'vid4'
 # test_args['dataset_folder'] =  './datasets/vid4/LR/*'

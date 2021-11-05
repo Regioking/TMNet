@@ -18,6 +18,7 @@ import itertools
 import re
 import options.options as option
 
+
 def check_if_folder_exist(folder_path=None):
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
@@ -26,18 +27,19 @@ def check_if_folder_exist(folder_path=None):
             print('Folder: ' + folder_path + ' exists and is not a folder!')
             exit()
 
+
 def test(test_args):
     code_name = test_args['code_name']
     model_path = test_args['model_path']
     data_mode = test_args['data_mode']
     dataset_folder = test_args['dataset_folder']
     result_folder = test_args['result_folder']
-    #os.environ['CUDA_VISIBLE_DEVICES'] = test_args['cuda']
+    # os.environ['CUDA_VISIBLE_DEVICES'] = test_args['cuda']
     use_time = test_args['use_time']
 
     scale = 4
     N_ot = test_args['N_ot']
-    N_in = 1+ N_ot // 2
+    N_in = 1 + N_ot // 2
     header_written = False
 
     model = STVSR.TMNet(64, N_ot, 8, 5, 40)
@@ -48,7 +50,7 @@ def test(test_args):
     if data_mode == 'SPMC':
         test_dataset_folder = '/data/xiang/SR/spmc/*'
     if data_mode == 'Custom':
-        test_dataset_folder = '../test_example/*' # TODO: put your own data path here
+        test_dataset_folder = dataset_folder  # TODO: put your own data path here
 
     folder = os.path.join(result_folder, data_mode)
     save_folder = os.path.join(folder, code_name)
@@ -56,22 +58,23 @@ def test(test_args):
     save_csv = os.path.join(folder, code_name + '.csv')
 
     #### evaluation
-    flip_test = False #True#
+    flip_test = False  # True#
     crop_border = 0
 
     # temporal padding mode
     padding = 'replicate'
-    save_imgs = True #True#
+    save_imgs = True  # True#
     if 'Custom' in data_mode: save_imgs = True
     ############################################################################
     if torch.cuda.is_available():
-        device = torch.device('cuda') 
+        device = torch.device('cuda')
     else:
         device = torch.device('cpu')
 
     util.mkdirs(save_folder)
-    
-    util.setup_logger(logger_name=code_name + '_with_' + data_mode, root=folder, phase=code_name, level=logging.INFO, screen=True, tofile=True)
+
+    util.setup_logger(logger_name=code_name + '_with_' + data_mode, root=folder, phase=code_name, level=logging.INFO,
+                      screen=True, tofile=True)
     logger = logging.getLogger(name=code_name + '_with_' + data_mode)
     model_params = util.get_model_total_params(model)
 
@@ -86,20 +89,21 @@ def test(test_args):
     def single_forward(model, imgs_in, use_time=None, N_ot=None):
         with torch.no_grad():
             # imgs_in.size(): [1,n,3,h,w]
-            b,n,c,h,w = imgs_in.size()
-            h_n = int(4*np.ceil(h/4))
-            w_n = int(4*np.ceil(w/4))
-            imgs_temp = imgs_in.new_zeros(b,n,c,h_n,w_n)
-            imgs_temp[:,:,:,0:h,0:w] = imgs_in
+            b, n, c, h, w = imgs_in.size()
+            h_n = int(4 * np.ceil(h / 4))
+            w_n = int(4 * np.ceil(w / 4))
+            imgs_temp = imgs_in.new_zeros(b, n, c, h_n, w_n)
+            imgs_temp[:, :, :, 0:h, 0:w] = imgs_in
             if use_time == True:
                 number_side = int((N_ot - 2 - 1) / 2)
-                time_number = [(0.5 / (number_side + 1)) * i for i in range(1, number_side + 1)] + [0.5] + [0.5 + (0.5 / (number_side + 1)) * i for i in range(1, number_side + 1)]
+                time_number = [(0.5 / (number_side + 1)) * i for i in range(1, number_side + 1)] + [0.5] + [
+                    0.5 + (0.5 / (number_side + 1)) * i for i in range(1, number_side + 1)]
                 time_Tensors = torch.Tensor(time_number).unsqueeze(0)
                 time_Tensors = time_Tensors.to(device)
             else:
                 time_Tensors = None
             model_output = model(imgs_temp, time_Tensors)
-            model_output = model_output[:, :, :, 0:scale*h, 0:scale*w]
+            model_output = model_output[:, :, :, 0:scale * h, 0:scale * w]
             if isinstance(model_output, list) or isinstance(model_output, tuple):
                 output = model_output[0]
             else:
@@ -144,21 +148,21 @@ def test(test_args):
             sub_folder_GT = osp.join(sub_folder.replace('/LR/', '/HR/'))
 
         if 'Custom' not in data_mode:
-            img_GT_lists = glob.glob(osp.join(sub_folder_GT,'*'))
+            img_GT_lists = glob.glob(osp.join(sub_folder_GT, '*'))
             img_GT_lists.sort(key=lambda x: int(re.search(r'\d+', os.path.basename(x)).group()))
             for img_GT_path in img_GT_lists:
                 img_GT_l.append(util.read_image(img_GT_path))
         cal_n = 0
-        avg_psnr, avg_psnr_sum = 0,0
+        avg_psnr, avg_psnr_sum = 0, 0
         # avg_ssim, avg_ssim_sum = 0,0
-        avg_psnr_y, avg_psnr_sum_y = 0,0
+        avg_psnr_y, avg_psnr_sum_y = 0, 0
         # avg_ssim_y, avg_ssim_sum_y = 0,0
-        
+
         if len(img_LR_l) == len(img_GT_l):
             skip = True
         else:
             skip = False
-        
+
         if 'Custom' in data_mode:
             select_idx_list = util.test_index_generation(False, N_ot, len(img_LR_l))
         else:
@@ -174,17 +178,17 @@ def test(test_args):
 
             output = single_forward(model, imgs_in, use_time=use_time, N_ot=N_ot)
 
-            outputs = output.data.float().cpu().squeeze(0)            
+            outputs = output.data.float().cpu().squeeze(0)
 
             if flip_test:
                 # flip W
-                output = single_forward(model, torch.flip(imgs_in, (-1, )))
-                output = torch.flip(output, (-1, ))
+                output = single_forward(model, torch.flip(imgs_in, (-1,)))
+                output = torch.flip(output, (-1,))
                 output = output.data.float().cpu().squeeze(0)
                 outputs = outputs + output
                 # flip H
-                output = single_forward(model, torch.flip(imgs_in, (-2, )))
-                output = torch.flip(output, (-2, ))
+                output = single_forward(model, torch.flip(imgs_in, (-2,)))
+                output = torch.flip(output, (-2,))
                 output = output.data.float().cpu().squeeze(0)
                 outputs = outputs + output
                 # flip both H and W
@@ -200,7 +204,7 @@ def test(test_args):
                 if name_idx in gt_tested_list:
                     continue
                 gt_tested_list.append(name_idx)
-                output_f = outputs[idx,:,:,:].squeeze(0)
+                output_f = outputs[idx, :, :, :].squeeze(0)
 
                 output = util.tensor2img(output_f)
                 if save_imgs:
@@ -231,7 +235,9 @@ def test(test_args):
                     # avg_ssim_sum += crt_ssim
                     # avg_ssim_sum_y += crt_ssim_y
                     cal_n += 1
-                    logger.info('{:3d} - {:25}.png \tPSNR: {:.6f} dB  PSNR-Y: {:.6f} dB'.format(name_idx + 1, name_idx+1, crt_psnr, crt_psnr_y))
+                    logger.info(
+                        '{:3d} - {:25}.png \tPSNR: {:.6f} dB  PSNR-Y: {:.6f} dB'.format(name_idx + 1, name_idx + 1,
+                                                                                        crt_psnr, crt_psnr_y))
 
                     with open(save_csv, "a+", newline="") as wf:
                         writer = csv.DictWriter(wf, fieldnames=['name', 'psnr-y'])
@@ -240,14 +246,18 @@ def test(test_args):
                         else:
                             writer.writeheader()
                             header_written = True
-                        writer.writerow({'name': osp.join(sub_folder_name, '{:08d}.png'.format(name_idx+1)), 'psnr-y': crt_psnr_y})
+                        writer.writerow({'name': osp.join(sub_folder_name, '{:08d}.png'.format(name_idx + 1)),
+                                         'psnr-y': crt_psnr_y})
 
         if 'Custom' not in data_mode:
             avg_psnr = avg_psnr_sum / cal_n
             avg_psnr_y = avg_psnr_sum_y / cal_n
             # avg_ssim = avg_ssim_sum / cal_n
             # avg_ssim_y = avg_ssim_sum_y / cal_n
-            logger.info('Folder {} - Average PSNR: {:.6f} dB PSNR-Y: {:.6f} dB for {} frames; '.format(sub_folder_name, avg_psnr, avg_psnr_y, cal_n))
+            logger.info('Folder {} - Average PSNR: {:.6f} dB PSNR-Y: {:.6f} dB for {} frames; '.format(sub_folder_name,
+                                                                                                       avg_psnr,
+                                                                                                       avg_psnr_y,
+                                                                                                       cal_n))
             # logger.info('Folder {} - Average PSNR: {:.6f} dB PSNR-Y: {:.6f} dB for {} frames; - Average SSIM: {:.6f} dB SSIM-Y: {:.6f} dB for {} frames; '.format(sub_folder_name, avg_psnr, avg_psnr_y, cal_n, avg_ssim, avg_ssim_y, cal_n))
             avg_psnr_l.append(avg_psnr)
             avg_psnr_y_l.append(avg_psnr_y)
@@ -259,15 +269,20 @@ def test(test_args):
         for name, psnr, psnr_y in zip(sub_folder_name_l, avg_psnr_l, avg_psnr_y_l):
             logger.info('Folder {} - Average PSNR: {:.6f} dB PSNR-Y: {:.6f} dB'.format(name, psnr, psnr_y))
         # for name, psnr, psnr_y, ssim, ssim_y in zip(sub_folder_name_l, avg_psnr_l, avg_psnr_y_l, avg_ssim_l, avg_ssim_y_l):
-            # logger.info('Folder {} - Average PSNR: {:.6f} dB PSNR-Y: {:.6f} dB - Average SSIM: {:.6f} dB SSIM-Y: {:.6f} dB. '.format(name, psnr, psnr_y, ssim, ssim_y))
+        # logger.info('Folder {} - Average PSNR: {:.6f} dB PSNR-Y: {:.6f} dB - Average SSIM: {:.6f} dB SSIM-Y: {:.6f} dB. '.format(name, psnr, psnr_y, ssim, ssim_y))
         logger.info('################ Final Results ################')
         logger.info('Data: {} - {}'.format(data_mode, test_dataset_folder))
         logger.info('Padding mode: {}'.format(padding))
         logger.info('Model path: {}'.format(model_path))
         logger.info('Save images: {}'.format(save_imgs))
         logger.info('Flip Test: {}'.format(flip_test))
-        logger.info('Total Average PSNR: {:.6f} dB PSNR-Y: {:.6f} dB for {} clips.'.format(sum(avg_psnr_l) / len(avg_psnr_l), sum(avg_psnr_y_l) / len(avg_psnr_y_l), len(sub_folder_l)))
+        logger.info(
+            'Total Average PSNR: {:.6f} dB PSNR-Y: {:.6f} dB for {} clips.'.format(sum(avg_psnr_l) / len(avg_psnr_l),
+                                                                                   sum(avg_psnr_y_l) / len(
+                                                                                       avg_psnr_y_l),
+                                                                                   len(sub_folder_l)))
         # logger.info('Total Average PSNR: {:.6f} dB PSNR-Y: {:.6f} dB for {} clips. Total Average SSIM: {:.6f} dB SSIM-Y: {:.6f} dB for {} clips.'.format(sum(avg_psnr_l) / len(avg_psnr_l), sum(avg_psnr_y_l) / len(avg_psnr_y_l), len(sub_folder_l), sum(avg_ssim_l) / len(avg_ssim_l), sum(avg_ssim_y_l) / len(avg_ssim_y_l), len(sub_folder_l)))
+
 
 if __name__ == '__main__':
     test()
